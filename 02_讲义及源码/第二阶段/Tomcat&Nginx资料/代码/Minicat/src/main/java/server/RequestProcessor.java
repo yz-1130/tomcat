@@ -9,9 +9,12 @@ public class RequestProcessor extends Thread {
     private Socket socket;
     private Map<String,HttpServlet> servletMap;
 
-    public RequestProcessor(Socket socket, Map<String, HttpServlet> servletMap) {
+    private Map<String,HttpServlet> stringHttpServletMap;
+
+    public RequestProcessor(Socket socket, Map<String, HttpServlet> servletMap,Map<String, HttpServlet> stringHttpServletMap) {
         this.socket = socket;
         this.servletMap = servletMap;
+        this.stringHttpServletMap = stringHttpServletMap;
     }
 
     @Override
@@ -24,11 +27,11 @@ public class RequestProcessor extends Thread {
             Response response = new Response(socket.getOutputStream());
 
             // 静态资源处理
-            if(servletMap.get(request.getUrl()) == null) {
+            if(stringHttpServletMap.get(request.getUrl()) == null) {
                 response.outputHtml(request.getUrl());
             }else{
                 // 动态资源servlet请求
-                HttpServlet httpServlet = servletMap.get(request.getUrl());
+                HttpServlet httpServlet = stringHttpServletMap.get(request.getUrl());
                 httpServlet.service(request,response);
             }
 

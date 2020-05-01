@@ -6,6 +6,7 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,8 +40,10 @@ public class Bootstrap {
     public void start() throws Exception {
 
         // 加载解析相关的配置，web.xml
-        loadServlet();
+       // loadServlet();
 
+        //通过本地配置，动态加载对应的servlet，但是本地有一个demo，对应的也应该有一个servlet；
+        loadFileServlet();
 
         // 定义一个线程池
         int corePoolSize = 10;
@@ -146,7 +149,7 @@ public class Bootstrap {
         while(true) {
 
             Socket socket = serverSocket.accept();
-            RequestProcessor requestProcessor = new RequestProcessor(socket,servletMap);
+            RequestProcessor requestProcessor = new RequestProcessor(socket,servletMap,servletFileMap);
             //requestProcessor.start();
             threadPoolExecutor.execute(requestProcessor);
         }
@@ -157,6 +160,11 @@ public class Bootstrap {
 
 
     private Map<String,HttpServlet> servletMap = new HashMap<String,HttpServlet>();
+
+    private Map<String,HttpServlet> servletFileMap = new HashMap<String,HttpServlet>();
+
+
+
 
     /**
      * 加载解析web.xml，初始化Servlet
@@ -184,6 +192,7 @@ public class Bootstrap {
                 Element servletMapping = (Element) rootElement.selectSingleNode("/web-app/servlet-mapping[servlet-name='" + servletName + "']");
                 // /lagou
                 String urlPattern = servletMapping.selectSingleNode("url-pattern").getStringValue();
+
                 servletMap.put(urlPattern, (HttpServlet) Class.forName(servletClass).newInstance());
 
             }
@@ -202,6 +211,40 @@ public class Bootstrap {
 
     }
 
+
+    //获取目录下所有的app文件名，去server下查找对应的servlet，请求时根据路径加载不同的servlet，如果没有对应的servlet，返回错误
+    private void loadFileServlet() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        File file = new File("/Users/webapps");
+        String[] list = file.list();
+        for(int i =0;i<list.length;i++){
+            String urlPattern = "/"+list[i];
+            String httpServlet = "server."+upperCase(list[i]+"Servlet");
+            HttpServlet httpServlet1 = (HttpServlet) Class.forName(httpServlet).newInstance();
+            servletFileMap.put(urlPattern,httpServlet1);
+
+        }
+
+
+        //getAllFilePath(file);
+    }
+
+    public String upperCase(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+//    public static void getAllFilePath(File dir){
+//        File[] files=dir.listFiles();
+//        for(int i=0;i<files.length;i++){
+//            if(files[i].isDirectory()){
+//                String path = files[i].getPath();
+//                System.out.println(path);
+//                String urlPatten = ;
+//                //这里面用了递归的算法
+//                getAllFilePath(files[i]);
+//            } else {
+//                System.out.println(files[i].getPath());
+//            }
+//        }
+ //   }
 
     /**
      * Minicat 的程序启动入口

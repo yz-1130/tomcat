@@ -8,7 +8,7 @@ public class LagouServlet extends HttpServlet {
 
 
         try {
-            Thread.sleep(100000);
+            Thread.sleep(1);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
